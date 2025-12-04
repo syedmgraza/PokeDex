@@ -64,7 +64,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // 1. Modern Floating App Bar
           SliverAppBar(
             title: const Text(
-              'POKEDEX',
+              'POKEPEDIA',
               style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
             ),
             centerTitle: true,

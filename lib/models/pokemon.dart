@@ -1,6 +1,5 @@
 import 'package:your_fav_pokemon/models/sprites.dart';
 import 'package:your_fav_pokemon/models/stats.dart';
-
 import 'abilities.dart';
 import 'ability.dart';
 import 'moves.dart';
@@ -14,6 +13,7 @@ class Pokemon {
   Ability? species;
   Sprites? sprites;
   List<Stats>? stats;
+  List<Types>? types; // <--- ADDED THIS
   int? weight;
 
   Pokemon(
@@ -25,6 +25,7 @@ class Pokemon {
         this.species,
         this.sprites,
         this.stats,
+        this.types, // <--- ADDED THIS
         this.weight});
 
   Pokemon.fromJson(Map<String, dynamic> json) {
@@ -43,44 +44,34 @@ class Pokemon {
       });
     }
     name = json['name'];
-    species =
-    json['species'] != null ? Ability.fromJson(json['species']) : null;
-    sprites =
-    json['sprites'] != null ? Sprites.fromJson(json['sprites']) : null;
+    species = json['species'] != null ? Ability.fromJson(json['species']) : null;
+    sprites = json['sprites'] != null ? Sprites.fromJson(json['sprites']) : null;
     if (json['stats'] != null) {
       stats = <Stats>[];
       json['stats'].forEach((v) {
         stats!.add(Stats.fromJson(v));
       });
     }
+    // <--- ADDED THIS LOGIC
+    if (json['types'] != null) {
+      types = <Types>[];
+      json['types'].forEach((v) {
+        types!.add(Types.fromJson(v));
+      });
+    }
     weight = json['weight'];
   }
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    if (abilities != null) {
-      data['abilities'] = abilities!.map((v) => v.toJson()).toList();
-    }
+}
 
-    data['height'] = height;
+class Types {
+  int? slot;
+  Ability? type;
 
-    data['id'] = id;
+  Types({this.slot, this.type});
 
-    if (moves != null) {
-      data['moves'] = moves!.map((v) => v.toJson()).toList();
-    }
-    data['name'] = name;
-
-    if (species != null) {
-      data['species'] = species!.toJson();
-    }
-    if (sprites != null) {
-      data['sprites'] = sprites!.toJson();
-    }
-    if (stats != null) {
-      data['stats'] = stats!.map((v) => v.toJson()).toList();
-    }
-    data['weight'] = weight;
-    return data;
+  Types.fromJson(Map<String, dynamic> json) {
+    slot = json['slot'];
+    type = json['type'] != null ? Ability.fromJson(json['type']) : null;
   }
 }

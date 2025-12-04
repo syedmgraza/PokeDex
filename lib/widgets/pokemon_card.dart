@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:your_fav_pokemon/models/pokemon.dart'; // Ensure this import works
 import 'package:your_fav_pokemon/providers/pokemon_data_providers.dart';
-import '../models/pokemon.dart';
+
+import 'package:your_fav_pokemon/utils/pokemon_type_colors.dart';
+
 import '../pages/pokemon_detail_screen.dart';
 
 class PokemonCard extends ConsumerWidget {
@@ -21,13 +24,21 @@ class PokemonCard extends ConsumerWidget {
   }
 
   Widget _buildCard(BuildContext context, bool isLoading, Pokemon? pokemon) {
+    // 1. Get the primary type (e.g., "grass")
+    final type = pokemon?.types?.isNotEmpty == true
+        ? pokemon!.types!.first.type?.name
+        : "normal";
+
+    // 2. Get the corresponding color
+    final cardColor = isLoading ? Colors.white : PokemonTypeColors.getColor(type);
+
     return GestureDetector(
       onTap: () {
         if (pokemon != null) {
           showModalBottomSheet(
             context: context,
-            isScrollControlled: true, // This allows the sheet to go full height
-            backgroundColor: Colors.transparent, // Required for rounded top corners
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
             builder: (context) {
               return PokemonDetailScreen(
                 pokemon: pokemon,
@@ -44,11 +55,19 @@ class PokemonCard extends ConsumerWidget {
           margin: const EdgeInsets.all(8),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            // 3. Apply the dynamic color with a subtle gradient for a "Pro" look
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                cardColor.withOpacity(0.8), // Slightly lighter
+                cardColor,                  // Actual color
+              ],
+            ),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
+                color: cardColor.withOpacity(0.4), // Colored shadow!
                 spreadRadius: 2,
                 blurRadius: 10,
                 offset: const Offset(0, 4),
@@ -58,7 +77,7 @@ class PokemonCard extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // HEADER (Name/ID) - Same as before
+              // HEADER
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -68,63 +87,74 @@ class PokemonCard extends ConsumerWidget {
                           ? pokemon!.name![0].toUpperCase() + pokemon.name!.substring(1)
                           : "Pokemon Name",
                       style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white, // White text for contrast
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   Text(
                     pokemon?.id != null ? '#${pokemon?.id.toString().padLeft(3, '0')}' : '#001',
                     style: TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade400),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white.withOpacity(0.8), // Semi-transparent white
+                    ),
                   ),
                 ],
               ),
 
-              // IMAGE AREA - Added HERO widget
+              // IMAGE AREA
               Expanded(
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
+                    // Background Circle (White semi-transparent)
                     Container(
-                      height: 80, width: 80,
+                      height: 100,
+                      width: 100,
                       decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.05),
+                        color: Colors.white.withOpacity(0.2),
                         shape: BoxShape.circle,
                       ),
                     ),
-                    // Wrap Image in Hero for the "Flying" animation effect
                     if (pokemon?.sprites?.frontDefault != null)
                       Hero(
-                        tag: pokemon!.id.toString(), // Must match the tag in Detail Screen
+                        tag: pokemon!.id.toString(),
                         child: Image.network(
                           pokemon.sprites!.frontDefault!,
                           fit: BoxFit.contain,
-                          height: 100,
+                          height: 120,
                         ),
                       )
                     else
-                      const Icon(Icons.image_not_supported, color: Colors.grey),
+                      const Icon(Icons.image_not_supported, color: Colors.white54),
                   ],
                 ),
               ),
 
-              // FOOTER (Moves/Heart) - Same as before
+              // FOOTER
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Type Badge
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
+                      color: Colors.black.withOpacity(0.1), // Darkened pill
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      "${pokemon?.moves?.length ?? 0} Moves",
-                      style: TextStyle(
-                          fontSize: 10, fontWeight: FontWeight.w600, color: Colors.blue.shade700),
+                      type?.toUpperCase() ?? "TYPE",
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                  Icon(Icons.favorite, color: Colors.red.shade400, size: 20)
+                  const Icon(Icons.favorite_border, color: Colors.white, size: 24)
                 ],
               )
             ],
