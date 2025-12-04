@@ -15,19 +15,18 @@ class PokemonDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch favorites to toggle the heart icon
     final favouritePokemons = ref.watch(favouritePokemonProvider);
     final isFavourite = favouritePokemons.contains(pokemonURL);
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.9, // Takes 90% of screen
+      height: MediaQuery.of(context).size.height * 0.9,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
       ),
       child: Column(
         children: [
-          // 1. The Drag Handle (Visual cue that this is a sheet)
+          // Drag Handle
           const SizedBox(height: 10),
           Container(
             width: 50,
@@ -38,11 +37,10 @@ class PokemonDetailScreen extends ConsumerWidget {
             ),
           ),
 
-          // 2. The Content
           Expanded(
             child: CustomScrollView(
               slivers: [
-                // Header with Image and Name
+                // Header: Name, ID, Heart, and ANIMATED IMAGE
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
@@ -51,25 +49,26 @@ class PokemonDetailScreen extends ConsumerWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  pokemon.name?.toUpperCase() ?? "UNKNOWN",
-                                  style: const TextStyle(
-                                    fontSize: 30,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 1.5,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    pokemon.name?.toUpperCase() ?? "UNKNOWN",
+                                    style: const TextStyle(
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 1.5,
+                                    ),
                                   ),
-                                ),
-                                // FIXED: Removed baseExperience, showing only ID
-                                Text(
-                                  "ID: #${pokemon.id}",
-                                  style: TextStyle(
-                                      color: Colors.grey.shade600,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ],
+                                  Text(
+                                    "ID: #${pokemon.id}",
+                                    style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
                             ),
                             IconButton(
                               onPressed: () {
@@ -88,8 +87,9 @@ class PokemonDetailScreen extends ConsumerWidget {
                             )
                           ],
                         ),
-                        const SizedBox(height: 20),
-                        // HERO IMAGE: This makes the image "fly" from the previous screen
+                        const SizedBox(height: 30),
+
+                        // --- ANIMATION SECTION START ---
                         Hero(
                           tag: pokemon.id.toString(),
                           child: Container(
@@ -99,20 +99,17 @@ class PokemonDetailScreen extends ConsumerWidget {
                               color: Colors.blue.withOpacity(0.05),
                               shape: BoxShape.circle,
                             ),
-                            child: pokemon.sprites?.frontDefault != null
-                                ? Image.network(
-                              pokemon.sprites!.frontDefault!,
-                              fit: BoxFit.contain,
-                            )
-                                : const Icon(Icons.image, size: 100),
+                            // Call the helper method to choose the best image
+                            child: _buildPokemonImage(),
                           ),
                         ),
+                        // --- ANIMATION SECTION END ---
                       ],
                     ),
                   ),
                 ),
 
-                // Physical Stats (Height / Weight)
+                // Physical Stats
                 SliverToBoxAdapter(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -123,7 +120,7 @@ class PokemonDetailScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // Base Stats Section
+                // Base Stats
                 _buildSectionTitle("Base Stats"),
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
@@ -136,7 +133,7 @@ class PokemonDetailScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // Abilities Section
+                // Abilities
                 _buildSectionTitle("Abilities"),
                 SliverToBoxAdapter(
                   child: Padding(
@@ -156,7 +153,7 @@ class PokemonDetailScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // Moves Section
+                // Moves
                 _buildSectionTitle("Moves"),
                 SliverToBoxAdapter(
                   child: Padding(
@@ -181,7 +178,6 @@ class PokemonDetailScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // Bottom padding
                 const SliverToBoxAdapter(child: SizedBox(height: 50)),
               ],
             ),
@@ -191,7 +187,40 @@ class PokemonDetailScreen extends ConsumerWidget {
     );
   }
 
-  // Helper: Section Titles
+  // Logic to determine which image to show
+  Widget _buildPokemonImage() {
+    // 1. Try Showdown (Best Quality GIF)
+    if (pokemon.sprites?.showdownFront != null) {
+      return Image.network(
+        pokemon.sprites!.showdownFront!,
+        fit: BoxFit.contain,
+        // Key helps Flutter differentiate between the static image on the previous screen
+        // and this animated one, preventing hero glitches.
+        key: ValueKey("showdown-${pokemon.id}"),
+      );
+    }
+
+    // 2. Try Gen 5 (Pixel Art GIF)
+    if (pokemon.sprites?.animatedFront != null) {
+      return Image.network(
+        pokemon.sprites!.animatedFront!,
+        fit: BoxFit.contain,
+        scale: 0.5, // Pixel art needs to be bigger
+        key: ValueKey("animated-${pokemon.id}"),
+      );
+    }
+
+    // 3. Fallback to Static Image
+    if (pokemon.sprites?.frontDefault != null) {
+      return Image.network(
+        pokemon.sprites!.frontDefault!,
+        fit: BoxFit.contain,
+      );
+    }
+
+    return const Icon(Icons.image_not_supported, size: 80, color: Colors.black12);
+  }
+
   Widget _buildSectionTitle(String title) {
     return SliverToBoxAdapter(
       child: Padding(
@@ -204,7 +233,6 @@ class PokemonDetailScreen extends ConsumerWidget {
     );
   }
 
-  // Helper: Stat Row (Progress Bar)
   Widget _buildStatRow(String name, int value) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -228,7 +256,7 @@ class PokemonDetailScreen extends ConsumerWidget {
                   ),
                 ),
                 FractionallySizedBox(
-                  widthFactor: (value / 200).clamp(0.0, 1.0), // Assuming max stat ~200
+                  widthFactor: (value / 200).clamp(0.0, 1.0),
                   child: Container(
                     height: 10,
                     decoration: BoxDecoration(
@@ -250,7 +278,6 @@ class PokemonDetailScreen extends ConsumerWidget {
     );
   }
 
-  // Helper: Physical Attributes
   Widget _buildAttributeBadge(String label, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
